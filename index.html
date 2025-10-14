@@ -85,12 +85,14 @@
     /* ボタンセクション */
     .button-section {
       position: fixed;
-      bottom: 40px; /* ここを下げました */
+      bottom: 40px; /* 下げてある */
       right: 20px;
       display: flex;
       align-items: center;
       gap: 15px;
       z-index: 10;
+      flex-direction: column; /* 縦に積む */
+      align-items: center;
     }
 
     /* ボタン共通 */
@@ -107,6 +109,8 @@
       align-items: center;
       overflow: visible;
       transition: background-color 0.3s ease;
+      position: relative;
+      z-index: 11;
     }
     button.audio-toggle:hover {
       background-color: #ff4c9e;
@@ -120,7 +124,37 @@
       transition: transform 0.3s ease;
     }
 
-    /* 画像大量表示用コンテナ */
+    /* 光るエフェクトのスタイル */
+    .glow-effect {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%);
+      box-shadow:
+        0 0 10px 5px rgba(255,255,255,0.7),
+        0 0 20px 10px rgba(255,192,203,0.5);
+      opacity: 0;
+      animation: glowPulse 4s ease-in-out infinite;
+      margin-bottom: 10px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      40%, 60% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+      50% {
+        opacity: 0.8;
+      }
+    }
+
+    /* 画像大量表示用コンテナ（未使用） */
     #imgContainer {
       position: fixed;
       top: 0; left: 0;
@@ -184,6 +218,7 @@
 
   <!-- ボタン群 -->
   <div class="button-section" aria-label="音楽再生の切り替え">
+    <div class="glow-effect" aria-hidden="true"></div>
     <button class="audio-toggle" id="toggleAudio" aria-label="BGMの再生/停止">
       <svg viewBox="0 0 24 24" id="audioIcon">
         <path id="iconPath" d="M8 5v14l11-7z"></path> <!-- 再生 ▶ -->
@@ -223,8 +258,7 @@
         this.color = this.randomColor();
         this.shape = Math.random() > 0.5 ? 'rect' : 'circle';
       }
-
-      randomColor() {
+            randomColor() {
         const colors = [
           '#ff0a54', '#ff477e', '#ff7096', '#ff85a1',
           '#fbb1bd', '#ffd700', '#00e0ff', '#00ff94',
@@ -303,8 +337,6 @@
         iconPath.setAttribute('d', playPath);
       }
     });
-
-    // --- 画像大量表示制御は削除しました ---
   </script>
 </body>
 </html>
