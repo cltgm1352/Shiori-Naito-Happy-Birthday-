@@ -4,16 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Shiori Naito Happy Birthday！</title>
-  
+
   <!-- ファビコン -->
   <link rel="icon" type="image/png" href="favicon.png" />
 
   <style>
-    /* --- ローディング画面 --- */
+    /* ローディング画面 */
     #loading {
       position: fixed;
       top: 0; left: 0;
-      width: 100vw; height: 100vh;
+      width: 100vw; 
+      height: 100vh;
       background: #fff;
       display: flex;
       justify-content: center;
@@ -28,8 +29,9 @@
       pointer-events: none;
     }
     #loading video {
-      width: 300px;
-      height: auto;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
     }
 
     /* 背景設定 */
@@ -105,19 +107,10 @@
       pointer-events: none;
     }
 
-    canvas.shootingStars {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      z-index: 5;
-    }
-
     /* ボタンセクション */
     .button-section {
       position: fixed;
-      bottom: 40px; /* 下げた */
+      bottom: 40px;
       right: 20px;
       display: flex;
       align-items: center;
@@ -152,7 +145,7 @@
       transition: transform 0.3s ease;
     }
 
-    /* 画像大量表示用 */
+    /* 画像大量表示用コンテナ */
     #imgContainer {
       position: fixed;
       top: 0; left: 0;
@@ -161,7 +154,7 @@
       pointer-events: none;
       overflow: hidden;
       z-index: 9;
-      display: none;
+      display: none; /* 初期非表示 */
     }
 
     #imgContainer img {
@@ -174,6 +167,7 @@
       animation: weirdMove 5s forwards, fadeOut 1.5s 4s forwards;
     }
 
+    /* 気持ち悪めのズーム&揺れアニメーション */
     @keyframes weirdMove {
       0% {
         transform: translateY(100vh) scale(1) rotate(0deg);
@@ -193,6 +187,7 @@
       }
     }
 
+    /* フェードアウト */
     @keyframes fadeOut {
       to {
         opacity: 0;
@@ -202,50 +197,51 @@
 </head>
 <body>
   <!-- ローディング画面 -->
-  <div id="loading" aria-label="読み込み中">
+  <div id="loading">
     <video src="loading.mp4" autoplay muted playsinline></video>
   </div>
 
   <header>
     <img src="ShioriNaitoHappy%20Birthday!.png" alt="Shiori Naito Happy Birthday!">
     <canvas class="confetti"></canvas>
-    <canvas class="shootingStars"></canvas>
   </header>
 
-  <audio id="bgm" src="happybgm.mp3" loop autoplay muted></audio>
+  <audio id="bgm" src="happybgm.mp3" loop></audio>
 
+  <!-- 画像大量表示用 -->
   <div id="imgContainer"></div>
 
-  <div class="button-section" aria-label="BGMの再生/停止">
+  <!-- ボタン群 -->
+  <div class="button-section" aria-label="音楽再生と画像表示の切り替え">
     <button class="audio-toggle" id="toggleAudio" aria-label="BGMの再生/停止">
       <svg viewBox="0 0 24 24" id="audioIcon">
-        <path id="iconPath" d="M8 5v14l11-7z"></path> <!-- ▶ 再生 -->
+        <path id="iconPath" d="M8 5v14l11-7z"></path> <!-- 再生 ▶ -->
       </svg>
     </button>
   </div>
 
   <script>
-    // --- ローディング処理 ---
+    // ローディング画面制御
     const loading = document.getElementById('loading');
-    const loadingVideo = loading.querySelector('video');
+    const video = loading.querySelector('video');
 
-    loadingVideo.addEventListener('ended', () => {
+    video.addEventListener('ended', () => {
       loading.classList.add('fadeout');
       setTimeout(() => {
         loading.style.display = 'none';
+        // BGM自動再生トライ
+        playBGM();
       }, 1000);
     });
 
-    // --- 紙吹雪 ---
-    const confettiCanvas = document.querySelector('.confetti');
-    const confettiCtx = confettiCanvas.getContext('2d');
+    // --- 紙吹雪コード ---
+    const canvas = document.querySelector('.confetti');
+    const ctx = canvas.getContext('2d');
     let confettis = [];
 
     function resizeCanvas() {
-      confettiCanvas.width = window.innerWidth;
-      confettiCanvas.height = window.innerHeight;
-      shootingCanvas.width = window.innerWidth;
-      shootingCanvas.height = window.innerHeight;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     }
 
     window.addEventListener('resize', resizeCanvas);
@@ -255,9 +251,10 @@
       constructor() {
         this.reset();
       }
+
       reset() {
-        this.x = Math.random() * confettiCanvas.width;
-        this.y = Math.random() * -confettiCanvas.height;
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * -canvas.height;
         this.w = Math.random() * 12 + 4;
         this.h = Math.random() * 6 + 4;
         this.opacity = Math.random() * 0.8 + 0.2;
@@ -268,6 +265,7 @@
         this.color = this.randomColor();
         this.shape = Math.random() > 0.5 ? 'rect' : 'circle';
       }
+
       randomColor() {
         const colors = [
           '#ff0a54', '#ff477e', '#ff7096', '#ff85a1',
@@ -276,21 +274,24 @@
         ];
         return colors[Math.floor(Math.random() * colors.length)];
       }
+
       update() {
         this.y += this.speed + this.gravity;
         this.x += Math.sin(this.angle * Math.PI / 180) * 1.5;
         this.angle += this.rotateSpeed;
-        if (this.y > confettiCanvas.height) {
+        if (this.y > canvas.height) {
           this.reset();
           this.y = 0;
         }
       }
+
       draw(ctx) {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle * Math.PI / 180);
         ctx.globalAlpha = this.opacity;
         ctx.fillStyle = this.color;
+
         if (this.shape === 'rect') {
           ctx.fillRect(-this.w / 2, -this.h / 2, this.w, this.h);
         } else {
@@ -298,6 +299,7 @@
           ctx.arc(0, 0, this.w / 2, 0, 2 * Math.PI);
           ctx.fill();
         }
+
         ctx.restore();
       }
     }
@@ -306,117 +308,18 @@
       confettis.push(new Confetti());
     }
 
-    function animateConfetti() {
-      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       confettis.forEach(c => {
         c.update();
-        c.draw(confettiCtx);
+        c.draw(ctx);
       });
-      requestAnimationFrame(animateConfetti);
+      requestAnimationFrame(animate);
     }
 
-    animateConfetti();
+    animate();
 
-    // --- 流れ星 (右下→左上、左上→右下) ---
-    const shootingCanvas = document.querySelector('.shootingStars');
-    const shootingCtx = shootingCanvas.getContext('2d');
-
-    class ShootingStar {
-      constructor() {
-        this.reset();
-      }
-      reset() {
-        this.length = Math.random() * 80 + 50;
-        this.speed = Math.random() * 7 + 10;
-        this.opacity = 0;
-        this.fadeInSpeed = 0.03;
-        this.fadeOutSpeed = 0.01;
-        this.active = false;
-        this.startTime = performance.now() + Math.random() * 5000; // ランダム開始遅延
-        this.direction = Math.random() > 0.5 ? 1 : -1; // 1:右下→左上, -1:左上→右下
-
-        if (this.direction === 1) {
-          // 右下→左上
-          this.x = shootingCanvas.width + this.length;
-          this.y = shootingCanvas.height + this.length;
-          this.vx = -this.speed;
-          this.vy = -this.speed;
-        } else {
-          // 左上→右下
-          this.x = -this.length;
-          this.y = -this.length;
-          this.vx = this.speed;
-          this.vy = this.speed;
-        }
-      }
-      update(time) {
-        if (time < this.startTime) return;
-
-        if (!this.active) {
-          this.active = true;
-          this.opacity = 0;
-        }
-
-        this.x += this.vx;
-        this.y += this.vy;
-
-        if (this.opacity < 1 && this.active) {
-          this.opacity += this.fadeInSpeed;
-          if (this.opacity > 1) this.opacity = 1;
-        }
-
-        // フェードアウト開始判定（キャンバス外に出たら）
-        if (
-          this.x < -this.length || this.x > shootingCanvas.width + this.length ||
-          this.y < -this.length || this.y > shootingCanvas.height + this.length
-        ) {
-          this.opacity -= this.fadeOutSpeed;
-          if (this.opacity <= 0) {
-            this.reset();
-            this.active = false;
-          }
-        }
-      }
-      draw(ctx) {
-        if (!this.active) return;
-        ctx.save();
-        ctx.globalAlpha = this.opacity;
-        // 金色グラデーション
-        let grad = ctx.createLinearGradient(this.x, this.y, this.x - this.vx * this.length, this.y - this.vy * this.length);
-        grad.addColorStop(0, 'rgba(255, 215, 0, 1)');   // gold
-        grad.addColorStop(1, 'rgba(255, 215, 0, 0)');   // transparent
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x - this.vx * this.length, this.y - this.vy * this.length);
-        ctx.stroke();
-
-        // 星の輝き
-        ctx.fillStyle = 'rgba(255, 215, 0, ' + this.opacity + ')';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 3, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-
-    const shootingStars = [];
-    for(let i = 0; i < 6; i++) {
-      shootingStars.push(new ShootingStar());
-    }
-
-    function animateShootingStars(time=0) {
-      shootingCtx.clearRect(0, 0, shootingCanvas.width, shootingCanvas.height);
-      shootingStars.forEach(star => {
-        star.update(time);
-        star.draw(shootingCtx);
-      });
-      requestAnimationFrame(animateShootingStars);
-    }
-    animateShootingStars();
-
-    // --- BGM自動再生＆ボタン制御 ---
+    // --- BGM制御 ---
     const audio = document.getElementById('bgm');
     const toggleBtn = document.getElementById('toggleAudio');
     const iconPath = document.getElementById('iconPath');
@@ -424,75 +327,23 @@
     const playPath = "M8 5v14l11-7z"; // ▶
     const pausePath = "M6 5h4v14H6zm8 0h4v14h-4z"; // ||
 
-    function updateIcon() {
-      if (audio.paused) {
-        iconPath.setAttribute('d', playPath);
-      } else {
-        iconPath.setAttribute('d', pausePath);
-      }
+    function playBGM() {
+      audio.play().then(() => {
+        iconPath.setAttribute('d', pausePath); // 再生中は || にする
+      }).catch(() => {
+        iconPath.setAttribute('d', playPath); // 自動再生失敗は ▶ のまま
+      });
     }
 
     toggleBtn.addEventListener('click', () => {
       if (audio.paused) {
-        audio.muted = false; // ミュート解除して音あり再生
         audio.play();
+        iconPath.setAttribute('d', pausePath);
       } else {
         audio.pause();
+        iconPath.setAttribute('d', playPath);
       }
-      updateIcon();
     });
-
-    // ページロード時はミュート自動再生
-    audio.muted = true;
-    audio.play().catch(() => {
-      // 自動再生がブロックされた場合の処理はここに
-    });
-    updateIcon();
-
-    // --- imgshiori大量表示（省略したければ削除可能） ---
-    const imgToggleBtn = null; // 削除済みボタンのため不要
-    const imgContainer = document.getElementById('imgContainer');
-    let animationRunning = false;
-
-    function randomPosition() {
-      return {
-        x: Math.random() * (window.innerWidth - 80),
-        y: window.innerHeight + 100
-      };
-    }
-
-    function createImage() {
-      const img = document.createElement('img');
-      img.src = 'imgshiori.png';
-      const pos = randomPosition();
-      img.style.left = pos.x + 'px';
-      img.style.top = pos.y + 'px';
-      imgContainer.appendChild(img);
-      img.addEventListener('animationend', () => {
-        img.remove();
-      });
-    }
-
-    function startImageRain() {
-      if (animationRunning) return;
-      animationRunning = true;
-      imgContainer.style.display = 'block';
-      let count = 0;
-      const maxCount = 100;
-      const interval = setInterval(() => {
-        createImage();
-        count++;
-        if (count >= maxCount) {
-          clearInterval(interval);
-          setTimeout(() => {
-            imgContainer.style.display = 'none';
-            animationRunning = false;
-          }, 6000);
-        }
-      }, 50);
-    }
-
-    // imgToggleBtnがないので画像大量表示は使っていません
   </script>
 </body>
 </html>
