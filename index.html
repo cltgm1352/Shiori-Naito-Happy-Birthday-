@@ -93,14 +93,6 @@
       z-index: 10;
     }
 
-    .button-section img {
-      width: 50px;
-      height: 50px;
-      object-fit: contain;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
-
     /* ボタン共通 */
     button.audio-toggle, button.img-toggle {
       background-color: #ff69b4;
@@ -147,19 +139,35 @@
       width: 80px;
       height: 80px;
       object-fit: contain;
-      opacity: 0.6;
       user-select: none;
       pointer-events: none;
-      animation: floatUp 5s linear forwards;
+      animation: weirdMove 5s forwards, fadeOut 1.5s 4s forwards;
+      /* 5秒で動いて4秒後から1.5秒でフェードアウト */
     }
 
-    @keyframes floatUp {
+    /* 気持ち悪めのズーム&揺れアニメーション */
+    @keyframes weirdMove {
       0% {
-        transform: translateY(100vh) scale(0.5);
-        opacity: 0.6;
+        transform: translateY(100vh) scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      25% {
+        transform: translateY(70vh) scale(1.1) rotate(10deg);
+      }
+      50% {
+        transform: translateY(40vh) scale(0.9) rotate(-15deg);
+      }
+      75% {
+        transform: translateY(10vh) scale(1.15) rotate(7deg);
       }
       100% {
-        transform: translateY(-100px) scale(1);
+        transform: translateY(-100px) scale(1) rotate(0deg);
+      }
+    }
+
+    /* フェードアウト */
+    @keyframes fadeOut {
+      to {
         opacity: 0;
       }
     }
@@ -178,9 +186,8 @@
 
   <!-- ボタン群 -->
   <div class="button-section" aria-label="音楽再生と画像表示の切り替え">
-    <img src="imgshiori.png" alt="Shiori Image" />
     <button class="img-toggle" aria-label="画像をいっぱい表示">
-      <!-- 花のアイコン的なsvg -->
+      <!-- 図形アイコンのみ -->
       <svg viewBox="0 0 24 24">
         <path fill="white" d="M12 2a5 5 0 0 1 5 5c0 2.76-3 5-5 5s-5-2.24-5-5a5 5 0 0 1 5-5m0 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
       </svg>
@@ -313,7 +320,7 @@
 
     function randomPosition() {
       return {
-        x: Math.random() * window.innerWidth,
+        x: Math.random() * (window.innerWidth - 80),
         y: window.innerHeight + 100 // 画面下からスタート
       };
     }
@@ -321,11 +328,12 @@
     function createImage() {
       const img = document.createElement('img');
       img.src = 'imgshiori.png';
-      img.style.left = randomPosition().x + 'px';
-      img.style.top = randomPosition().y + 'px';
+      const pos = randomPosition();
+      img.style.left = pos.x + 'px';
+      img.style.top = pos.y + 'px';
       imgContainer.appendChild(img);
 
-      // floatUpアニメーション終わったら削除
+      // animationendで削除（fadeOut完了後）
       img.addEventListener('animationend', () => {
         img.remove();
       });
@@ -347,7 +355,7 @@
           setTimeout(() => {
             imgContainer.style.display = 'none';
             animationRunning = false;
-          }, 5000);
+          }, 6000); // アニメーション終了少し後
         }
       }, 50);
     }
