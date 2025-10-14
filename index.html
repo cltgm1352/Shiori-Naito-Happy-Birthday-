@@ -13,24 +13,24 @@
     #loadingScreen {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: black;
+      background: white; /* ここを黒から白に変更 */
       display: flex;
       justify-content: center;
       align-items: center;
       z-index: 9999;
       overflow: hidden;
+      opacity: 1;
+      transition: opacity 1s ease;
+    }
+    #loadingScreen.fadeout {
+      opacity: 0;
+      pointer-events: none;
     }
     #loadingScreen video {
       width: 100vw;
       height: 100vh;
       object-fit: cover;
-    }
-    #loadingScreen.fadeout {
-      animation: fadeWhite 1s forwards;
-    }
-    @keyframes fadeWhite {
-      from { background-color: transparent; }
-      to { background-color: white; }
+      background: white; /* 動画の背景も白 */
     }
 
     /* 背景設定 */
@@ -186,10 +186,10 @@
     document.body.style.overflow = 'hidden'; // スクロール禁止
 
     setTimeout(() => {
-      loadingScreen.classList.add('fadeout');
+      loadingScreen.classList.add('fadeout'); // opacityを0にして透明化
       setTimeout(() => {
         loadingScreen.style.display = 'none';
-        document.body.style.overflow = '';
+        document.body.style.overflow = ''; // スクロール許可
       }, 1000);
     }, 2200);
 
@@ -357,13 +357,11 @@
         this.elapsed = 0;
 
         if (fromRightBottom) {
-          // start near bottom right corner
           this.startX = sparkleCanvas.width / devicePixelRatio + 50;
           this.startY = sparkleCanvas.height / devicePixelRatio + 50;
-          this.speedX = -300; // px per sec
+          this.speedX = -300;
           this.speedY = -300;
         } else {
-          // start near top left corner
           this.startX = -50;
           this.startY = -50;
           this.speedX = 300;
@@ -407,8 +405,8 @@
       shootingStars = shootingStars.filter(s => s.isActive);
 
       if (Math.random() < 0.01 && shootingStars.length < 2) {
-        shootingStars.push(new ShootingStar(true));  // 右下→左上
-        shootingStars.push(new ShootingStar(false)); // 左上→右下
+        shootingStars.push(new ShootingStar(true));
+        shootingStars.push(new ShootingStar(false));
       }
 
       requestAnimationFrame(animateSparkle);
