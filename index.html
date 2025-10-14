@@ -2,13 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Shiori Naito Happy Birthday！</title>
-
-  <!-- ファビコン追加 -->
+  
+  <!-- ファビコン -->
   <link rel="icon" type="image/png" href="favicon.png" />
 
   <style>
+    /* 背景設定 */
     body {
       margin: 0;
       font-family: 'Arial', sans-serif;
@@ -18,7 +19,7 @@
       min-height: 100vh;
     }
 
-    /* 背景用風船とキラキラ */
+    /* ぼんやり風船の丸と影 */
     body::before {
       content: "";
       position: fixed;
@@ -36,6 +37,7 @@
       z-index: 0;
     }
 
+    /* 紙吹雪のようなキラキラ */
     body::after {
       content: "";
       position: fixed;
@@ -53,11 +55,12 @@
       z-index: 0;
     }
 
+    /* ヘッダー・画像と紙吹雪用キャンバス */
     header {
       position: relative;
       width: 100%;
       height: 100vh;
-      background-color: #fff;
+      background-color: transparent;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -79,11 +82,27 @@
       pointer-events: none;
     }
 
-    .audio-toggle {
+    /* ボタンセクション */
+    .button-section {
       position: fixed;
-      bottom: 20px;
+      bottom: 100px;
       right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
       z-index: 10;
+    }
+
+    .button-section img {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    /* ボタン共通 */
+    button.audio-toggle, button.img-toggle {
       background-color: #ff69b4;
       border: none;
       border-radius: 50%;
@@ -95,50 +114,54 @@
       justify-content: center;
       align-items: center;
       overflow: visible;
+      transition: background-color 0.3s ease;
+    }
+    button.audio-toggle:hover,
+    button.img-toggle:hover {
+      background-color: #ff4c9e;
     }
 
-    .audio-toggle svg {
+    button.audio-toggle svg,
+    button.img-toggle svg {
       width: 30px;
       height: 30px;
       fill: white;
       overflow: visible;
+      transition: transform 0.3s ease;
     }
 
-    .image-toggle {
-      position: fixed;
-      bottom: 20px;
-      right: 90px; /* 再生ボタンの左に配置 */
-      z-index: 10;
-      background-color: #ff69b4;
-      border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: visible;
-    }
-
-    .image-toggle svg {
-      width: 30px;
-      height: 30px;
-      fill: white;
-    }
-
-    /* 画面いっぱい画像オーバーレイ */
-    #shioriOverlay {
-      display: none;
+    /* 画像大量表示用コンテナ */
+    #imgContainer {
       position: fixed;
       top: 0; left: 0;
       width: 100vw;
       height: 100vh;
-      background: transparent;
-      overflow: hidden;
       pointer-events: none;
-      z-index: 10000;
+      overflow: hidden;
+      z-index: 9;
+      display: none; /* 初期非表示 */
+    }
+
+    #imgContainer img {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      opacity: 0.6;
+      user-select: none;
+      pointer-events: none;
+      animation: floatUp 5s linear forwards;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(100vh) scale(0.5);
+        opacity: 0.6;
+      }
+      100% {
+        transform: translateY(-100px) scale(1);
+        opacity: 0;
+      }
     }
   </style>
 </head>
@@ -150,22 +173,28 @@
 
   <audio id="bgm" src="happybgm.mp3" loop></audio>
 
-  <button class="image-toggle" id="toggleImages" aria-label="Toggle Shiori Images">
-    <svg viewBox="0 0 24 24" >
-      <path d="M12 2C10 6 8 8 12 22c4-14 2-16 0-20z"/>
-    </svg>
-  </button>
+  <!-- 画像大量表示用 -->
+  <div id="imgContainer"></div>
 
-  <button class="audio-toggle" id="toggleAudio" aria-label="BGM Toggle">
-    <svg viewBox="0 0 24 24" id="audioIcon">
-      <path id="iconPath" d="M8 5v14l11-7z"></path> <!-- 再生 ▶ -->
-    </svg>
-  </button>
+  <!-- ボタン群 -->
+  <div class="button-section" aria-label="音楽再生と画像表示の切り替え">
+    <img src="imgshiori.png" alt="Shiori Image" />
+    <button class="img-toggle" aria-label="画像をいっぱい表示">
+      <!-- 花のアイコン的なsvg -->
+      <svg viewBox="0 0 24 24">
+        <path fill="white" d="M12 2a5 5 0 0 1 5 5c0 2.76-3 5-5 5s-5-2.24-5-5a5 5 0 0 1 5-5m0 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+      </svg>
+    </button>
 
-  <div id="shioriOverlay"></div>
+    <button class="audio-toggle" id="toggleAudio" aria-label="BGMの再生/停止">
+      <svg viewBox="0 0 24 24" id="audioIcon">
+        <path id="iconPath" d="M8 5v14l11-7z"></path> <!-- 再生 ▶ -->
+      </svg>
+    </button>
+  </div>
 
   <script>
-    // 紙吹雪
+    // --- 紙吹雪コード ---
     const canvas = document.querySelector('.confetti');
     const ctx = canvas.getContext('2d');
     let confettis = [];
@@ -250,19 +279,21 @@
 
     animate();
 
-    // BGM制御
+    // --- BGM制御 ---
     const audio = document.getElementById('bgm');
     const toggleBtn = document.getElementById('toggleAudio');
     const iconPath = document.getElementById('iconPath');
 
-    const playPath = "M8 5v14l11-7z";
-    const pausePath = "M6 5h4v14H6zm8 0h4v14h-4z";
+    const playPath = "M8 5v14l11-7z"; // ▶
+    const pausePath = "M6 5h4v14H6zm8 0h4v14h-4z"; // ||
 
-    // 自動再生トライ（ユーザー操作でないと弾かれる場合あり）
-    audio.play().then(() => {
-      iconPath.setAttribute('d', pausePath);
-    }).catch(() => {
-      iconPath.setAttribute('d', playPath);
+    // 自動再生トライ
+    window.addEventListener('load', () => {
+      audio.play().then(() => {
+        iconPath.setAttribute('d', pausePath); // 再生中は || にする
+      }).catch(() => {
+        iconPath.setAttribute('d', playPath); // 自動再生失敗は ▶ のまま
+      });
     });
 
     toggleBtn.addEventListener('click', () => {
@@ -275,56 +306,53 @@
       }
     });
 
-    // 画像大量表示制御
-    const toggleImagesBtn = document.getElementById('toggleImages');
-    const shioriOverlay = document.getElementById('shioriOverlay');
-    let imagesVisible = false;
+    // --- imgshioriいっぱい表示制御 ---
+    const imgToggleBtn = document.querySelector('button.img-toggle');
+    const imgContainer = document.getElementById('imgContainer');
+    let animationRunning = false;
 
-    function fillScreenWithImages() {
-      shioriOverlay.innerHTML = ''; // クリア
-
-      const imgSize = 80;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const cols = Math.ceil(w / imgSize);
-      const rows = Math.ceil(h / imgSize);
-
-      for(let y = 0; y < rows; y++) {
-        for(let x = 0; x < cols; x++) {
-          const img = document.createElement('img');
-          img.src = 'imgshiori.png';
-          img.style.position = 'absolute';
-          img.style.width = imgSize + 'px';
-          img.style.height = imgSize + 'px';
-          img.style.left = (x * imgSize) + 'px';
-          img.style.top = (y * imgSize) + 'px';
-
-          const rotateDeg = (x + y) * 10 % 360;
-          img.style.transform = `rotate(${rotateDeg}deg)`;
-          img.style.opacity = 0.3 + Math.sin((x + y) / 2) * 0.2;
-
-          shioriOverlay.appendChild(img);
-        }
-      }
+    function randomPosition() {
+      return {
+        x: Math.random() * window.innerWidth,
+        y: window.innerHeight + 100 // 画面下からスタート
+      };
     }
 
-    toggleImagesBtn.addEventListener('click', () => {
-      imagesVisible = !imagesVisible;
-      if(imagesVisible) {
-        fillScreenWithImages();
-        shioriOverlay.style.display = 'block';
-      } else {
-        shioriOverlay.style.display = 'none';
-        shioriOverlay.innerHTML = '';
-      }
-    });
+    function createImage() {
+      const img = document.createElement('img');
+      img.src = 'imgshiori.png';
+      img.style.left = randomPosition().x + 'px';
+      img.style.top = randomPosition().y + 'px';
+      imgContainer.appendChild(img);
 
-    // 画面リサイズ時に表示中なら再描画
-    window.addEventListener('resize', () => {
-      if(imagesVisible) {
-        fillScreenWithImages();
-      }
-    });
+      // floatUpアニメーション終わったら削除
+      img.addEventListener('animationend', () => {
+        img.remove();
+      });
+    }
+
+    function startImageRain() {
+      if (animationRunning) return;
+      animationRunning = true;
+      imgContainer.style.display = 'block';
+
+      let count = 0;
+      const maxCount = 100;
+      const interval = setInterval(() => {
+        createImage();
+        count++;
+        if (count >= maxCount) {
+          clearInterval(interval);
+          // 少し遅れて非表示
+          setTimeout(() => {
+            imgContainer.style.display = 'none';
+            animationRunning = false;
+          }, 5000);
+        }
+      }, 50);
+    }
+
+    imgToggleBtn.addEventListener('click', startImageRain);
   </script>
 </body>
 </html>
