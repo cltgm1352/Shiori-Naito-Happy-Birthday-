@@ -29,25 +29,61 @@
       z-index: 1;
     }
 
-    .confetti {
+    canvas.confetti {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
       z-index: 2;
+      pointer-events: none;
+    }
+
+    /* 🎵 音量ボタン */
+    .audio-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10;
+      background-color: #ff69b4;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .audio-toggle svg {
+      width: 30px;
+      height: 30px;
+      fill: white;
+    }
+
+    .audio-toggle:hover {
+      background-color: #ff1493;
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="ShioriNaitoHappy Birthday!.png" alt="Shiori Naito Happy Birthday!">
+    <img src="ShioriNaitoHappyBirthday!.png" alt="Shiori Naito Happy Birthday!">
     <canvas class="confetti"></canvas>
   </header>
 
+  <!-- 🎵 オーディオプレイヤー（非表示） -->
+  <audio id="bgm" src="hppybgm.mp3" loop></audio>
+
+  <!-- 🔊 トグルボタン -->
+  <button class="audio-toggle" id="toggleAudio" aria-label="BGM Toggle">
+    <!-- 初期状態は「音あり」アイコン -->
+    <svg id="audioIcon" viewBox="0 0 24 24">
+      <path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.06c1.48-.74 2.5-2.26 2.5-4.03zM14 3.23v2.06c3.39.49 6 3.39 6 6.71s-2.61 6.22-6 6.71v2.06c4.45-.53 8-4.31 8-8.77s-3.55-8.24-8-8.77z"/>
+    </svg>
+  </button>
+
   <script>
-    // シンプルな紙吹雪スクリプト
     const canvas = document.querySelector('.confetti');
     const ctx = canvas.getContext('2d');
     let confettis = [];
@@ -68,32 +104,43 @@
       reset() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * -canvas.height;
-        this.size = Math.random() * 8 + 2;
-        this.speed = Math.random() * 3 + 1;
-        this.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
-        this.rotation = Math.random() * 360;
-        this.rotationSpeed = Math.random() * 10 - 5;
+        this.w = Math.random() * 10 + 5;
+        this.h = Math.random() * 5 + 5;
+        this.opacity = Math.random() * 0.5 + 0.5;
+        this.angle = Math.random() * 360;
+        this.rotateSpeed = (Math.random() - 0.5) * 10;
+        this.speed = Math.random() * 3 + 2;
+        this.gravity = Math.random() * 0.5 + 0.3;
+        this.color = this.randomColor();
+      }
+
+      randomColor() {
+        const colors = ['#ff0a54', '#ff477e', '#ff7096', '#ff85a1', '#fbb1bd', '#ffd700', '#00e0ff', '#00ff94'];
+        return colors[Math.floor(Math.random() * colors.length)];
       }
 
       update() {
-        this.y += this.speed;
-        this.rotation += this.rotationSpeed;
+        this.y += this.speed + this.gravity;
+        this.x += Math.sin(this.angle * Math.PI / 180) * 2;
+        this.angle += this.rotateSpeed;
         if (this.y > canvas.height) {
           this.reset();
+          this.y = 0;
         }
       }
 
       draw(ctx) {
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation * Math.PI / 180);
+        ctx.rotate(this.angle * Math.PI / 180);
+        ctx.globalAlpha = this.opacity;
         ctx.fillStyle = this.color;
-        ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+        ctx.fillRect(-this.w / 2, -this.h / 2, this.w, this.h);
         ctx.restore();
       }
     }
 
-    for (let i = 0; i < 150; i++) {
+    for (let i = 0; i < 300; i++) {
       confettis.push(new Confetti());
     }
 
@@ -107,6 +154,42 @@
     }
 
     animate();
+
+    // 🔊 オーディオ制御
+    const audio = document.getElementById('bgm');
+    const toggleBtn = document.getElementById('toggleAudio');
+    const audioIcon = document.getElementById('audioIcon');
+
+    // 再生・停止トグル処理
+    toggleBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        setPlayingIcon();
+      } else {
+        audio.pause();
+        setMutedIcon();
+      }
+    });
+
+    // 初回ユーザー操作で自動再生（モバイル制限回避用）
+    window.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play().then(() => setPlayingIcon()).catch(() => {});
+      }
+    }, { once: true });
+
+    function setMutedIcon() {
+      audioIcon.innerHTML = `
+        <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.06c1.48-.74 2.5-2.26 2.5-4.03zM14 3.23v2.06c3.39.49 6 3.39 6 6.71s-2.61 6.22-6 6.71v2.06c4.45-.53 8-4.31 8-8.77s-3.55-8.24-8-8.77zM3 10v4h4l5 5V5L7 10H3z" />
+      `;
+    }
+
+    function setPlayingIcon() {
+      audioIcon.innerHTML = `
+        <path d="M3 10v4h4l5 5V5L7 10H3zM16 7h2v10h-2zM20 5h2v14h-2z"/>
+      `;
+    }
+
   </script>
 </body>
 </html>
