@@ -12,13 +12,15 @@
     body {
       margin: 0;
       font-family: 'Arial', sans-serif;
+
+      /* 誕生日っぽい背景グラデーション */
       background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
       position: relative;
       overflow-x: hidden;
       min-height: 100vh;
     }
 
-    /* 背景用風船とキラキラ */
+    /* 風船やキラキラの擬似要素をbodyに追加 */
     body::before {
       content: "";
       position: fixed;
@@ -57,7 +59,7 @@
       position: relative;
       width: 100%;
       height: 100vh;
-      background-color: #fff;
+      background-color: transparent; /* 背景透過 */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -75,6 +77,8 @@
       position: absolute;
       top: 0;
       left: 0;
+      width: 100%;
+      height: 100%;
       z-index: 2;
       pointer-events: none;
     }
@@ -216,17 +220,17 @@
     toggleBtn.addEventListener('click', () => {
       if (audio.paused) {
         audio.play();
-        iconPath.setAttribute('d', playPath);
+        iconPath.setAttribute('d', pausePath);
       } else {
         audio.pause();
-        iconPath.setAttribute('d', pausePath);
+        iconPath.setAttribute('d', playPath);
       }
     });
 
     window.addEventListener('click', () => {
       if (audio.paused) {
         audio.play().catch(() => {});
-        iconPath.setAttribute('d', playPath);
+        iconPath.setAttribute('d', pausePath);
       }
     }, { once: true });
   </script>
