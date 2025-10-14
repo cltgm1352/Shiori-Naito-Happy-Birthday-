@@ -82,17 +82,27 @@
       pointer-events: none;
     }
 
+    /* 流れ星用キャンバス */
+    canvas#sparkleCanvas {
+      position: fixed;
+      width: 200px;
+      height: 200px;
+      bottom: 20px;
+      right: 20px;
+      pointer-events: none;
+      z-index: 15;
+      background: transparent;
+    }
+
     /* ボタンセクション */
     .button-section {
       position: fixed;
-      bottom: 40px; /* 下げてある */
+      bottom: 40px; /* 下げました */
       right: 20px;
       display: flex;
       align-items: center;
       gap: 15px;
       z-index: 10;
-      flex-direction: column; /* 縦に積む */
-      align-items: center;
     }
 
     /* ボタン共通 */
@@ -109,8 +119,6 @@
       align-items: center;
       overflow: visible;
       transition: background-color 0.3s ease;
-      position: relative;
-      z-index: 11;
     }
     button.audio-toggle:hover {
       background-color: #ff4c9e;
@@ -124,37 +132,7 @@
       transition: transform 0.3s ease;
     }
 
-    /* 光るエフェクトのスタイル */
-    .glow-effect {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%);
-      box-shadow:
-        0 0 10px 5px rgba(255,255,255,0.7),
-        0 0 20px 10px rgba(255,192,203,0.5);
-      opacity: 0;
-      animation: glowPulse 4s ease-in-out infinite;
-      margin-bottom: 10px;
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    @keyframes glowPulse {
-      0%, 100% {
-        opacity: 0;
-        transform: scale(0.8);
-      }
-      40%, 60% {
-        opacity: 1;
-        transform: scale(1.2);
-      }
-      50% {
-        opacity: 0.8;
-      }
-    }
-
-    /* 画像大量表示用コンテナ（未使用） */
+    /* 画像大量表示用コンテナ */
     #imgContainer {
       position: fixed;
       top: 0; left: 0;
@@ -174,10 +152,8 @@
       user-select: none;
       pointer-events: none;
       animation: weirdMove 5s forwards, fadeOut 1.5s 4s forwards;
-      /* 5秒で動いて4秒後から1.5秒でフェードアウト */
     }
 
-    /* 気持ち悪めのズーム&揺れアニメーション */
     @keyframes weirdMove {
       0% {
         transform: translateY(100vh) scale(1) rotate(0deg);
@@ -197,7 +173,6 @@
       }
     }
 
-    /* フェードアウト */
     @keyframes fadeOut {
       to {
         opacity: 0;
@@ -213,12 +188,14 @@
 
   <audio id="bgm" src="happybgm.mp3" loop></audio>
 
+  <!-- 流れ星キャンバス -->
+  <canvas id="sparkleCanvas"></canvas>
+
   <!-- 画像大量表示用 -->
   <div id="imgContainer"></div>
 
   <!-- ボタン群 -->
   <div class="button-section" aria-label="音楽再生の切り替え">
-    <div class="glow-effect" aria-hidden="true"></div>
     <button class="audio-toggle" id="toggleAudio" aria-label="BGMの再生/停止">
       <svg viewBox="0 0 24 24" id="audioIcon">
         <path id="iconPath" d="M8 5v14l11-7z"></path> <!-- 再生 ▶ -->
@@ -235,6 +212,9 @@
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      sparkleCanvas.width = sparkleCanvas.clientWidth * devicePixelRatio;
+      sparkleCanvas.height = sparkleCanvas.clientHeight * devicePixelRatio;
+      sparkleCtx.scale(devicePixelRatio, devicePixelRatio);
     }
 
     window.addEventListener('resize', resizeCanvas);
@@ -258,7 +238,8 @@
         this.color = this.randomColor();
         this.shape = Math.random() > 0.5 ? 'rect' : 'circle';
       }
-            randomColor() {
+
+      randomColor() {
         const colors = [
           '#ff0a54', '#ff477e', '#ff7096', '#ff85a1',
           '#fbb1bd', '#ffd700', '#00e0ff', '#00ff94',
@@ -337,6 +318,122 @@
         iconPath.setAttribute('d', playPath);
       }
     });
+
+    // --- 流れ星パーティクルエフェクト ---
+    const sparkleCanvas = document.getElementById('sparkleCanvas');
+    const sparkleCtx = sparkleCanvas.getContext('2d');
+
+    class SparkleParticle {
+      constructor(x, y, vx, vy, size, lifetime) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.size = size;
+        this.lifetime = lifetime;
+        this.age = 0;
+        this.opacity = 1;
+      }
+
+      update(delta) {
+        this.x += this.vx * delta;
+        this.y += this.vy * delta;
+        this.age += delta;
+        this.opacity = Math.max(0, 1 - this.age / this.lifetime);
+      }
+
+      draw(ctx) {
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+        gradient.addColorStop(0, `rgba(255, 215, 0, ${this.opacity})`); // gold bright
+        gradient.addColorStop(0.5, `rgba(255, 215, 0, ${this.opacity * 0.6})`);
+        gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    }
+
+    class ShootingStar {
+      constructor(fromRightBottom) {
+        this.fromRightBottom = fromRightBottom;
+        this.particles = [];
+        this.maxParticles = 20;
+        this.isActive = true;
+        this.elapsed = 0;
+
+        if (fromRightBottom) {
+          // Start near bottom-right corner of canvas
+          this.startX = sparkleCanvas.width / devicePixelRatio - 20;
+          this.startY = sparkleCanvas.height / devicePixelRatio - 20;
+          this.vx = -150; // px/s left
+          this.vy = -150; // px/s up
+        } else {
+          // Start near top-left corner
+          this.startX = 20;
+          this.startY = 20;
+          this.vx = 150; // px/s right
+          this.vy = 150; // px/s down
+        }
+
+        // Initialize particles spread along the line
+        for (let i = 0; i < this.maxParticles; i++) {
+          const px = this.startX + (i * this.vx) / this.maxParticles * 0.5;
+          const py = this.startY + (i * this.vy) / this.maxParticles * 0.5;
+          const speedX = this.vx + (Math.random() - 0.5) * 50;
+          const speedY = this.vy + (Math.random() - 0.5) * 50;
+          const size = Math.random() * 3 + 1.5;
+          const lifetime = 1 + Math.random() * 0.5;
+          this.particles.push(new SparkleParticle(px, py, speedX, speedY, size, lifetime));
+        }
+      }
+
+      update(delta) {
+        this.elapsed += delta;
+        this.particles.forEach(p => p.update(delta));
+        if (this.elapsed > 1.5) { // shooting star lasts ~1.5s
+          this.isActive = false;
+        }
+      }
+
+      draw(ctx) {
+        this.particles.forEach(p => p.draw(ctx));
+      }
+    }
+
+    let shootingStars = [];
+    let lastTimestamp = 0;
+    let shootInterval = 4000; // 4秒おきに流れる
+    let shootTimer = 0;
+    let directionToggle = true; // true = rightBottom -> leftTop, false = leftTop -> rightBottom
+
+    function sparkleAnimate(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const delta = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      sparkleCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+
+      // 新しい流れ星を4秒毎に生成
+      shootTimer += delta * 1000;
+      if (shootTimer > shootInterval) {
+        shootingStars.push(new ShootingStar(directionToggle));
+        directionToggle = !directionToggle;
+        shootTimer = 0;
+      }
+
+      // 更新と描画
+      shootingStars = shootingStars.filter(star => star.isActive);
+      shootingStars.forEach(star => {
+        star.update(delta);
+        star.draw(sparkleCtx);
+      });
+
+      requestAnimationFrame(sparkleAnimate);
+    }
+
+    sparkleAnimate();
   </script>
 </body>
 </html>
