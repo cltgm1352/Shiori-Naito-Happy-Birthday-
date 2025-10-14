@@ -4,8 +4,36 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Shiori Naito Happy Birthday！</title>
+
+  <!-- ファビコン -->
   <link rel="icon" type="image/png" href="favicon.png" />
+
   <style>
+    /* --- loading画面 --- */
+    #loadingScreen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      overflow: hidden;
+    }
+    #loadingScreen video {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+    }
+    #loadingScreen.fadeout {
+      animation: fadeWhite 1s forwards;
+    }
+    @keyframes fadeWhite {
+      from { background-color: transparent; }
+      to { background-color: white; }
+    }
+
+    /* 背景設定 */
     body {
       margin: 0;
       font-family: 'Arial', sans-serif;
@@ -14,6 +42,8 @@
       overflow-x: hidden;
       min-height: 100vh;
     }
+
+    /* ぼんやり風船の丸と影 */
     body::before {
       content: "";
       position: fixed;
@@ -30,6 +60,8 @@
       pointer-events: none;
       z-index: 0;
     }
+
+    /* 紙吹雪のようなキラキラ */
     body::after {
       content: "";
       position: fixed;
@@ -46,6 +78,8 @@
       pointer-events: none;
       z-index: 0;
     }
+
+    /* ヘッダー・画像と紙吹雪用キャンバス */
     header {
       position: relative;
       width: 100%;
@@ -57,39 +91,33 @@
       overflow: hidden;
       z-index: 1;
     }
+
     header img {
       max-width: 80%;
       height: auto;
       z-index: 1;
     }
+
     canvas.confetti {
       position: absolute;
       top: 0;
       left: 0;
       z-index: 2;
       pointer-events: none;
-      /* 透明度調整で見えやすく */
-      opacity: 0.9;
     }
-    canvas#sparkleCanvas {
-      position: fixed;
-      width: 200px;
-      height: 200px;
-      bottom: 20px;
-      right: 20px;
-      pointer-events: none;
-      z-index: 15;
-      background: transparent;
-    }
+
+    /* ボタンセクション */
     .button-section {
       position: fixed;
-      bottom: 40px;
+      bottom: 40px; /* 下げました */
       right: 20px;
       display: flex;
       align-items: center;
       gap: 15px;
       z-index: 10;
     }
+
+    /* ボタン共通 */
     button.audio-toggle {
       background-color: #ff69b4;
       border: none;
@@ -107,6 +135,7 @@
     button.audio-toggle:hover {
       background-color: #ff4c9e;
     }
+
     button.audio-toggle svg {
       width: 30px;
       height: 30px;
@@ -114,112 +143,83 @@
       overflow: visible;
       transition: transform 0.3s ease;
     }
-    #imgContainer {
+
+    /* 流れ星用キャンバス */
+    #sparkleCanvas {
       position: fixed;
       top: 0; left: 0;
       width: 100vw;
       height: 100vh;
       pointer-events: none;
-      overflow: hidden;
-      z-index: 9;
-      display: none;
+      z-index: 3;
     }
-    #imgContainer img {
-      position: absolute;
-      width: 80px;
-      height: 80px;
-      object-fit: contain;
-      user-select: none;
-      pointer-events: none;
-      animation: weirdMove 5s forwards, fadeOut 1.5s 4s forwards;
-    }
-    @keyframes weirdMove {
-      0% {
-        transform: translateY(100vh) scale(1) rotate(0deg);
-        opacity: 1;
-      }
-      25% {
-        transform: translateY(70vh) scale(1.1) rotate(10deg);
-      }
-      50% {
-        transform: translateY(40vh) scale(0.9) rotate(-15deg);
-      }
-      75% {
-        transform: translateY(10vh) scale(1.15) rotate(7deg);
-      }
-      100% {
-        transform: translateY(-100px) scale(1) rotate(0deg);
-      }
-    }
-    @keyframes fadeOut {
-      to {
-        opacity: 0;
-      }
-    }
+
   </style>
 </head>
 <body>
+  <!-- loading画面 -->
+  <div id="loadingScreen">
+    <video id="loadingVideo" src="loading.mp4" muted autoplay playsinline></video>
+  </div>
+
   <header>
     <img src="ShioriNaitoHappy%20Birthday!.png" alt="Shiori Naito Happy Birthday!">
     <canvas class="confetti"></canvas>
+    <canvas id="sparkleCanvas"></canvas>
   </header>
 
   <audio id="bgm" src="happybgm.mp3" loop></audio>
 
-  <canvas id="sparkleCanvas"></canvas>
-
-  <div id="imgContainer"></div>
-
+  <!-- ボタン群 -->
   <div class="button-section" aria-label="音楽再生の切り替え">
     <button class="audio-toggle" id="toggleAudio" aria-label="BGMの再生/停止">
       <svg viewBox="0 0 24 24" id="audioIcon">
-        <path id="iconPath" d="M8 5v14l11-7z"></path>
+        <path id="iconPath" d="M8 5v14l11-7z"></path> <!-- 再生 ▶ -->
       </svg>
     </button>
   </div>
 
   <script>
+    // --- loading画面制御 ---
+    const loadingScreen = document.getElementById('loadingScreen');
+    const loadingVideo = document.getElementById('loadingVideo');
+    document.body.style.overflow = 'hidden'; // スクロール禁止
+
+    setTimeout(() => {
+      loadingScreen.classList.add('fadeout');
+      setTimeout(() => {
+        loadingScreen.style.display = 'none';
+        document.body.style.overflow = '';
+      }, 1000);
+    }, 2200);
+
+    // --- 紙吹雪コード ---
     const canvas = document.querySelector('.confetti');
     const ctx = canvas.getContext('2d');
-    const sparkleCanvas = document.getElementById('sparkleCanvas');
-    const sparkleCtx = sparkleCanvas.getContext('2d');
+    let confettis = [];
 
     function resizeCanvas() {
-      // confetti canvas full screen
-      canvas.width = window.innerWidth * devicePixelRatio;
-      canvas.height = window.innerHeight * devicePixelRatio;
-      canvas.style.width = window.innerWidth + "px";
-      canvas.style.height = window.innerHeight + "px";
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(devicePixelRatio, devicePixelRatio);
-
-      // sparkleCanvas fixed 200x200 CSS size, scaled for retina
-      const sparkleSize = 200;
-      sparkleCanvas.width = sparkleSize * devicePixelRatio;
-      sparkleCanvas.height = sparkleSize * devicePixelRatio;
-      sparkleCanvas.style.width = sparkleSize + "px";
-      sparkleCanvas.style.height = sparkleSize + "px";
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      sparkleCanvas.width = window.innerWidth * devicePixelRatio;
+      sparkleCanvas.height = window.innerHeight * devicePixelRatio;
+      sparkleCanvas.style.width = window.innerWidth + 'px';
+      sparkleCanvas.style.height = window.innerHeight + 'px';
       sparkleCtx.setTransform(1, 0, 0, 1, 0, 0);
       sparkleCtx.scale(devicePixelRatio, devicePixelRatio);
     }
 
     window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('load', () => {
-      resizeCanvas();
-      audio.play().then(() => {
-        iconPath.setAttribute('d', pausePath);
-      }).catch(() => {
-        iconPath.setAttribute('d', playPath);
-      });
-    });
+    resizeCanvas();
 
     class Confetti {
       constructor() {
         this.reset();
       }
+
       reset() {
-        this.x = Math.random() * window.innerWidth;
-        this.y = Math.random() * -window.innerHeight;
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * -canvas.height;
         this.w = Math.random() * 12 + 4;
         this.h = Math.random() * 6 + 4;
         this.opacity = Math.random() * 0.8 + 0.2;
@@ -230,6 +230,7 @@
         this.color = this.randomColor();
         this.shape = Math.random() > 0.5 ? 'rect' : 'circle';
       }
+
       randomColor() {
         const colors = [
           '#ff0a54', '#ff477e', '#ff7096', '#ff85a1',
@@ -238,21 +239,24 @@
         ];
         return colors[Math.floor(Math.random() * colors.length)];
       }
+
       update() {
         this.y += this.speed + this.gravity;
         this.x += Math.sin(this.angle * Math.PI / 180) * 1.5;
         this.angle += this.rotateSpeed;
-        if (this.y > window.innerHeight) {
+        if (this.y > canvas.height) {
           this.reset();
           this.y = 0;
         }
       }
+
       draw(ctx) {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle * Math.PI / 180);
         ctx.globalAlpha = this.opacity;
         ctx.fillStyle = this.color;
+
         if (this.shape === 'rect') {
           ctx.fillRect(-this.w / 2, -this.h / 2, this.w, this.h);
         } else {
@@ -260,11 +264,11 @@
           ctx.arc(0, 0, this.w / 2, 0, 2 * Math.PI);
           ctx.fill();
         }
+
         ctx.restore();
       }
     }
 
-    const confettis = [];
     for (let i = 0; i < 500; i++) {
       confettis.push(new Confetti());
     }
@@ -280,12 +284,21 @@
 
     animateConfetti();
 
+    // --- BGM制御 ---
     const audio = document.getElementById('bgm');
     const toggleBtn = document.getElementById('toggleAudio');
     const iconPath = document.getElementById('iconPath');
 
     const playPath = "M8 5v14l11-7z"; // ▶
     const pausePath = "M6 5h4v14H6zm8 0h4v14h-4z"; // ||
+
+    window.addEventListener('load', () => {
+      audio.play().then(() => {
+        iconPath.setAttribute('d', pausePath);
+      }).catch(() => {
+        iconPath.setAttribute('d', playPath);
+      });
+    });
 
     toggleBtn.addEventListener('click', () => {
       if (audio.paused) {
@@ -297,61 +310,71 @@
       }
     });
 
-    // 流れ星パーティクル
+    // --- 流れ星（右下→左上、左上→右下）エフェクト ---
+    const sparkleCanvas = document.getElementById('sparkleCanvas');
+    const sparkleCtx = sparkleCanvas.getContext('2d');
+
     class SparkleParticle {
-      constructor(x, y, vx, vy, size, lifetime) {
+      constructor(x, y, speedX, speedY, size, life) {
         this.x = x;
         this.y = y;
-        this.vx = vx;
-        this.vy = vy;
+        this.speedX = speedX;
+        this.speedY = speedY;
         this.size = size;
-        this.lifetime = lifetime;
-        this.age = 0;
+        this.life = life; // seconds
+        this.maxLife = life;
         this.opacity = 1;
+        this.color = 'gold';
       }
+
       update(delta) {
-        this.x += this.vx * delta;
-        this.y += this.vy * delta;
-        this.age += delta;
-        this.opacity = Math.max(0, 1 - this.age / this.lifetime);
+        this.x += this.speedX * delta;
+        this.y += this.speedY * delta;
+        this.life -= delta;
+        this.opacity = Math.max(this.life / this.maxLife, 0);
       }
+
       draw(ctx) {
-        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
-        gradient.addColorStop(0, `rgba(255, 215, 0, ${this.opacity})`);
-        gradient.addColorStop(0.5, `rgba(255, 215, 0, ${this.opacity * 0.6})`);
-        gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
-        ctx.fillStyle = gradient;
+        if (this.opacity <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+        grad.addColorStop(0, 'rgba(255, 215, 0, 1)'); // gold
+        grad.addColorStop(0.8, 'rgba(255, 215, 0, 0.3)');
+        grad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+        ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
       }
     }
 
     class ShootingStar {
-      constructor(fromRightBottom) {
-        this.fromRightBottom = fromRightBottom;
-        this.particles = [];
-        this.maxParticles = 20;
+      constructor(fromRightBottom = true) {
         this.isActive = true;
+        this.particles = [];
         this.elapsed = 0;
 
         if (fromRightBottom) {
-          this.startX = 180; // sparkleCanvas 200px - margin
-          this.startY = 180;
-          this.vx = -150;
-          this.vy = -150;
+          // start near bottom right corner
+          this.startX = sparkleCanvas.width / devicePixelRatio + 50;
+          this.startY = sparkleCanvas.height / devicePixelRatio + 50;
+          this.speedX = -300; // px per sec
+          this.speedY = -300;
         } else {
-          this.startX = 20;
-          this.startY = 20;
-          this.vx = 150;
-          this.vy = 150;
+          // start near top left corner
+          this.startX = -50;
+          this.startY = -50;
+          this.speedX = 300;
+          this.speedY = 300;
         }
 
-        for (let i = 0; i < this.maxParticles; i++) {
-          const px = this.startX + (i * this.vx) / this.maxParticles * 0.5;
-          const py = this.startY + (i * this.vy) / this.maxParticles * 0.5;
-          const speedX = this.vx + (Math.random() - 0.5) * 50;
-          const speedY = this.vy + (Math.random() - 0.5) * 50;
+        for(let i = 0; i < 10; i++) {
+          const px = this.startX + (Math.random() - 0.5) * 50;
+          const py = this.startY + (Math.random() - 0.5) * 50;
+          const speedX = this.speedX + (Math.random() - 0.5) * 50;
+          const speedY = this.speedY + (Math.random() - 0.5) * 50;
           this.particles.push(new SparkleParticle(px, py, speedX, speedY, 5, 1.5));
         }
       }
@@ -384,8 +407,8 @@
       shootingStars = shootingStars.filter(s => s.isActive);
 
       if (Math.random() < 0.01 && shootingStars.length < 2) {
-        // 右下から流れる星を追加
-        shootingStars.push(new ShootingStar(true));
+        shootingStars.push(new ShootingStar(true));  // 右下→左上
+        shootingStars.push(new ShootingStar(false)); // 左上→右下
       }
 
       requestAnimationFrame(animateSparkle);
