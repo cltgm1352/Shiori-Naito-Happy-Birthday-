@@ -12,14 +12,13 @@
     body {
       margin: 0;
       font-family: 'Arial', sans-serif;
-
-      /* 誕生日っぽい背景グラデーション */
       background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
       position: relative;
       overflow-x: hidden;
       min-height: 100vh;
     }
 
+    /* 背景用風船とキラキラ */
     body::before {
       content: "";
       position: fixed;
@@ -58,7 +57,7 @@
       position: relative;
       width: 100%;
       height: 100vh;
-      background-color: transparent;
+      background-color: #fff;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -76,8 +75,6 @@
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
       z-index: 2;
       pointer-events: none;
     }
@@ -106,6 +103,43 @@
       fill: white;
       overflow: visible;
     }
+
+    .image-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 90px; /* 再生ボタンの左に配置 */
+      z-index: 10;
+      background-color: #ff69b4;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: visible;
+    }
+
+    .image-toggle svg {
+      width: 30px;
+      height: 30px;
+      fill: white;
+    }
+
+    /* 画面いっぱい画像オーバーレイ */
+    #shioriOverlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 10000;
+    }
   </style>
 </head>
 <body>
@@ -116,11 +150,19 @@
 
   <audio id="bgm" src="happybgm.mp3" loop></audio>
 
+  <button class="image-toggle" id="toggleImages" aria-label="Toggle Shiori Images">
+    <svg viewBox="0 0 24 24" >
+      <path d="M12 2C10 6 8 8 12 22c4-14 2-16 0-20z"/>
+    </svg>
+  </button>
+
   <button class="audio-toggle" id="toggleAudio" aria-label="BGM Toggle">
     <svg viewBox="0 0 24 24" id="audioIcon">
       <path id="iconPath" d="M8 5v14l11-7z"></path> <!-- 再生 ▶ -->
     </svg>
   </button>
+
+  <div id="shioriOverlay"></div>
 
   <script>
     // 紙吹雪
@@ -213,41 +255,76 @@
     const toggleBtn = document.getElementById('toggleAudio');
     const iconPath = document.getElementById('iconPath');
 
-    const playPath = "M8 5v14l11-7z";  // 再生▶
-    const pausePath = "M6 5h4v14H6zm8 0h4v14h-4z";  // 停止 ||
+    const playPath = "M8 5v14l11-7z";
+    const pausePath = "M6 5h4v14H6zm8 0h4v14h-4z";
 
-    function updateIcon() {
-      if (audio.paused) {
-        iconPath.setAttribute('d', playPath);
-      } else {
-        iconPath.setAttribute('d', pausePath);
-      }
-    }
-
-    // ページロード時に自動再生を試みる
-    window.addEventListener('load', () => {
-      audio.play().then(() => {
-        updateIcon();
-      }).catch(() => {
-        updateIcon();
-      });
+    // 自動再生トライ（ユーザー操作でないと弾かれる場合あり）
+    audio.play().then(() => {
+      iconPath.setAttribute('d', pausePath);
+    }).catch(() => {
+      iconPath.setAttribute('d', playPath);
     });
 
     toggleBtn.addEventListener('click', () => {
       if (audio.paused) {
-        audio.play().then(() => updateIcon());
+        audio.play();
+        iconPath.setAttribute('d', pausePath);
       } else {
         audio.pause();
-        updateIcon();
+        iconPath.setAttribute('d', playPath);
       }
     });
 
-    // ユーザーが一度どこかクリックしたら再生を試みる（ブラウザ制限回避用）
-    window.addEventListener('click', () => {
-      if (audio.paused) {
-        audio.play().then(() => updateIcon()).catch(() => {});
+    // 画像大量表示制御
+    const toggleImagesBtn = document.getElementById('toggleImages');
+    const shioriOverlay = document.getElementById('shioriOverlay');
+    let imagesVisible = false;
+
+    function fillScreenWithImages() {
+      shioriOverlay.innerHTML = ''; // クリア
+
+      const imgSize = 80;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const cols = Math.ceil(w / imgSize);
+      const rows = Math.ceil(h / imgSize);
+
+      for(let y = 0; y < rows; y++) {
+        for(let x = 0; x < cols; x++) {
+          const img = document.createElement('img');
+          img.src = 'imgshiori.png';
+          img.style.position = 'absolute';
+          img.style.width = imgSize + 'px';
+          img.style.height = imgSize + 'px';
+          img.style.left = (x * imgSize) + 'px';
+          img.style.top = (y * imgSize) + 'px';
+
+          const rotateDeg = (x + y) * 10 % 360;
+          img.style.transform = `rotate(${rotateDeg}deg)`;
+          img.style.opacity = 0.3 + Math.sin((x + y) / 2) * 0.2;
+
+          shioriOverlay.appendChild(img);
+        }
       }
-    }, { once: true });
+    }
+
+    toggleImagesBtn.addEventListener('click', () => {
+      imagesVisible = !imagesVisible;
+      if(imagesVisible) {
+        fillScreenWithImages();
+        shioriOverlay.style.display = 'block';
+      } else {
+        shioriOverlay.style.display = 'none';
+        shioriOverlay.innerHTML = '';
+      }
+    });
+
+    // 画面リサイズ時に表示中なら再描画
+    window.addEventListener('resize', () => {
+      if(imagesVisible) {
+        fillScreenWithImages();
+      }
+    });
   </script>
 </body>
 </html>
