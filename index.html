@@ -85,7 +85,7 @@
     /* ボタンセクション */
     .button-section {
       position: fixed;
-      bottom: 100px;
+      bottom: 40px; /* ここを下げました */
       right: 20px;
       display: flex;
       align-items: center;
@@ -94,7 +94,7 @@
     }
 
     /* ボタン共通 */
-    button.audio-toggle, button.img-toggle {
+    button.audio-toggle {
       background-color: #ff69b4;
       border: none;
       border-radius: 50%;
@@ -108,13 +108,11 @@
       overflow: visible;
       transition: background-color 0.3s ease;
     }
-    button.audio-toggle:hover,
-    button.img-toggle:hover {
+    button.audio-toggle:hover {
       background-color: #ff4c9e;
     }
 
-    button.audio-toggle svg,
-    button.img-toggle svg {
+    button.audio-toggle svg {
       width: 30px;
       height: 30px;
       fill: white;
@@ -185,14 +183,7 @@
   <div id="imgContainer"></div>
 
   <!-- ボタン群 -->
-  <div class="button-section" aria-label="音楽再生と画像表示の切り替え">
-    <button class="img-toggle" aria-label="画像をいっぱい表示">
-      <!-- 図形アイコンのみ -->
-      <svg viewBox="0 0 24 24">
-        <path fill="white" d="M12 2a5 5 0 0 1 5 5c0 2.76-3 5-5 5s-5-2.24-5-5a5 5 0 0 1 5-5m0 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
-      </svg>
-    </button>
-
+  <div class="button-section" aria-label="音楽再生の切り替え">
     <button class="audio-toggle" id="toggleAudio" aria-label="BGMの再生/停止">
       <svg viewBox="0 0 24 24" id="audioIcon">
         <path id="iconPath" d="M8 5v14l11-7z"></path> <!-- 再生 ▶ -->
@@ -313,54 +304,7 @@
       }
     });
 
-    // --- imgshioriいっぱい表示制御 ---
-    const imgToggleBtn = document.querySelector('button.img-toggle');
-    const imgContainer = document.getElementById('imgContainer');
-    let animationRunning = false;
-
-    function randomPosition() {
-      return {
-        x: Math.random() * (window.innerWidth - 80),
-        y: window.innerHeight + 100 // 画面下からスタート
-      };
-    }
-
-    function createImage() {
-      const img = document.createElement('img');
-      img.src = 'imgshiori.png';
-      const pos = randomPosition();
-      img.style.left = pos.x + 'px';
-      img.style.top = pos.y + 'px';
-      imgContainer.appendChild(img);
-
-      // animationendで削除（fadeOut完了後）
-      img.addEventListener('animationend', () => {
-        img.remove();
-      });
-    }
-
-    function startImageRain() {
-      if (animationRunning) return;
-      animationRunning = true;
-      imgContainer.style.display = 'block';
-
-      let count = 0;
-      const maxCount = 100;
-      const interval = setInterval(() => {
-        createImage();
-        count++;
-        if (count >= maxCount) {
-          clearInterval(interval);
-          // 少し遅れて非表示
-          setTimeout(() => {
-            imgContainer.style.display = 'none';
-            animationRunning = false;
-          }, 6000); // アニメーション終了少し後
-        }
-      }, 50);
-    }
-
-    imgToggleBtn.addEventListener('click', startImageRain);
+    // --- 画像大量表示制御は削除しました ---
   </script>
 </body>
 </html>
