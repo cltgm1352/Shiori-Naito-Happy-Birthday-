@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shiori Naito Happy Birthday！｜プレゼント</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+    }
+
+    /* ローディング画面 */
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 1s ease;
+    }
+
+    #loading.fadeout {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #loading video {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+    }
+
+    /* 装飾丸 */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 10%;
+      left: 5%;
+      width: 200px;
+      height: 300px;
+      background: radial-gradient(circle at center, rgba(255, 182, 193, 0.3), transparent 70%);
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      box-shadow:
+        100px 150px 0 0 rgba(255, 182, 193, 0.3),
+        150px 80px 0 0 rgba(255, 192, 203, 0.25),
+        300px 200px 0 0 rgba(255, 192, 203, 0.2);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* メイン表示 */
+    #mainContent {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* プレゼント画像 */
+    #presentImage {
+      width: 100%;
+      max-width: 300px; /* 最大300pxにサイズ制限 */
+      height: auto;
+      object-fit: contain;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    /* 左上の戻るボタン */
+    #returnBtn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 50px;
+      height: 50px;
+      z-index: 10;
+      cursor: pointer;
+    }
+
+    #returnBtn img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ローディング -->
+  <div id="loading">
+    <video src="openpresent-box.mp4" autoplay muted playsinline></video>
+  </div>
+
+  <!-- 戻るボタン -->
+  <a href="index.html" id="returnBtn" aria-label="戻る">
+    <img src="return.png" alt="戻る">
+  </a>
+
+  <!-- 中央のプレゼント画像 -->
+  <div id="mainContent" style="display: none;">
+    <img src="present1.png" alt="プレゼント画像" id="presentImage">
+  </div>
+
+  <script>
+    const loading = document.getElementById('loading');
+    const video = loading.querySelector('video');
+    const main = document.getElementById('mainContent');
+
+    video.addEventListener('loadeddata', () => {
+      setTimeout(() => {
+        loading.style.backgroundColor = '#fff';
+        loading.classList.add('fadeout');
+        setTimeout(() => {
+          loading.style.display = 'none';
+          document.body.style.overflow = 'auto';
+          main.style.display = 'flex';
+        }, 1000);
+      }, 300);
+    });
+  </script>
+
+</body>
+</html>
