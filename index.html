@@ -34,9 +34,25 @@
       object-fit: cover;
     }
 
-    /* 背景設定 */
-    body {
+    /* 全体スタイル */
+    html, body {
       margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden; /* ← 初期はスクロール禁止 + スクロールバー非表示 */
+      -ms-overflow-style: none;  /* IE, Edge 非表示 */
+      scrollbar-width: none;     /* Firefox 非表示 */
+    }
+    body::-webkit-scrollbar {
+      display: none; /* Chrome, Safari 非表示 */
+    }
+
+    body.unlocked {
+      overflow: auto; /* ← ローディング後スクロール有効 */
+    }
+
+    body {
       font-family: 'Arial', sans-serif;
       background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
       position: relative;
@@ -44,7 +60,6 @@
       min-height: 100vh;
     }
 
-    /* ぼんやり風船の丸と影 */
     body::before {
       content: "";
       position: fixed;
@@ -62,7 +77,6 @@
       z-index: 0;
     }
 
-    /* 紙吹雪のようなキラキラ */
     body::after {
       content: "";
       position: fixed;
@@ -80,7 +94,6 @@
       z-index: 0;
     }
 
-    /* ヘッダー・画像と紙吹雪用キャンバス */
     header {
       position: relative;
       width: 100%;
@@ -107,7 +120,6 @@
       pointer-events: none;
     }
 
-    /* ボタンセクション */
     .button-section {
       position: fixed;
       bottom: 40px;
@@ -118,7 +130,6 @@
       z-index: 10;
     }
 
-    /* ボタン共通 */
     button.audio-toggle {
       background-color: #ff69b4;
       border: none;
@@ -133,6 +144,7 @@
       overflow: visible;
       transition: background-color 0.3s ease;
     }
+
     button.audio-toggle:hover {
       background-color: #ff4c9e;
     }
@@ -145,7 +157,6 @@
       transition: transform 0.3s ease;
     }
 
-    /* 画像大量表示用コンテナ */
     #imgContainer {
       position: fixed;
       top: 0; left: 0;
@@ -154,7 +165,7 @@
       pointer-events: none;
       overflow: hidden;
       z-index: 9;
-      display: none; /* 初期非表示 */
+      display: none;
     }
 
     #imgContainer img {
@@ -167,7 +178,6 @@
       animation: weirdMove 5s forwards, fadeOut 1.5s 4s forwards;
     }
 
-    /* 気持ち悪めのズーム&揺れアニメーション */
     @keyframes weirdMove {
       0% {
         transform: translateY(100vh) scale(1) rotate(0deg);
@@ -187,14 +197,27 @@
       }
     }
 
-    /* フェードアウト */
     @keyframes fadeOut {
       to {
         opacity: 0;
       }
     }
+
+    /* 🎁 プレゼントセクション */
+    section#プレゼント {
+      width: 100%;
+      height: 100vh;
+      background-image: url('presentBoximg.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      cursor: pointer;
+      z-index: 5;
+      position: relative;
+    }
   </style>
 </head>
+
 <body>
   <!-- ローディング画面 -->
   <div id="loading">
@@ -220,8 +243,11 @@
     </button>
   </div>
 
+  <!-- 🎁 プレゼントセクション -->
+  <section id="プレゼント" aria-label="プレゼントセクション"></section>
+
   <script>
-    // ローディング画面制御
+    // ローディング終了でスクロール解除
     const loading = document.getElementById('loading');
     const video = loading.querySelector('video');
 
@@ -229,12 +255,12 @@
       loading.classList.add('fadeout');
       setTimeout(() => {
         loading.style.display = 'none';
-        // BGM自動再生トライ
+        document.body.classList.add('unlocked'); // ← スクロール可能に
         playBGM();
       }, 1000);
     });
 
-    // --- 紙吹雪コード ---
+    // 紙吹雪
     const canvas = document.querySelector('.confetti');
     const ctx = canvas.getContext('2d');
     let confettis = [];
@@ -267,11 +293,7 @@
       }
 
       randomColor() {
-        const colors = [
-          '#ff0a54', '#ff477e', '#ff7096', '#ff85a1',
-          '#fbb1bd', '#ffd700', '#00e0ff', '#00ff94',
-          '#ff8c00', '#adff2f', '#8a2be2'
-        ];
+        const colors = ['#ff0a54', '#ff477e', '#ff7096', '#ff85a1', '#fbb1bd', '#ffd700', '#00e0ff', '#00ff94', '#ff8c00', '#adff2f', '#8a2be2'];
         return colors[Math.floor(Math.random() * colors.length)];
       }
 
@@ -319,19 +341,18 @@
 
     animate();
 
-    // --- BGM制御 ---
+    // BGM制御
     const audio = document.getElementById('bgm');
     const toggleBtn = document.getElementById('toggleAudio');
     const iconPath = document.getElementById('iconPath');
-
-    const playPath = "M8 5v14l11-7z"; // ▶
-    const pausePath = "M6 5h4v14H6zm8 0h4v14h-4z"; // ||
+    const playPath = "M8 5v14l11-7z";
+    const pausePath = "M6 5h4v14H6zm8 0h4v14h-4z";
 
     function playBGM() {
       audio.play().then(() => {
-        iconPath.setAttribute('d', pausePath); // 再生中は || にする
+        iconPath.setAttribute('d', pausePath);
       }).catch(() => {
-        iconPath.setAttribute('d', playPath); // 自動再生失敗は ▶ のまま
+        iconPath.setAttribute('d', playPath);
       });
     }
 
@@ -343,6 +364,11 @@
         audio.pause();
         iconPath.setAttribute('d', playPath);
       }
+    });
+
+    // プレゼントセクションクリックで遷移
+    document.getElementById('プレゼント').addEventListener('click', () => {
+      window.location.href = 'present.html';
     });
   </script>
 </body>
